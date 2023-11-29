@@ -1,9 +1,11 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.InputMismatchException;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class FinalProject {
     private static ArrayList<Person> peopleList = new ArrayList<>();
@@ -42,7 +44,7 @@ public class FinalProject {
                     deletePerson(scanner);
                     break;
                 case 8:
-                    finishProgram();
+                    finishProgram(scanner);
                     break;
                 default:
                     System.out.println("Invalid choice. Please enter a number between 1 and 8.");
@@ -177,10 +179,135 @@ public class FinalProject {
         System.out.println("Sorry no such person exists.");
     }
 
-    private static void finishProgram() {
-        System.out.println("Exiting program.");
-        System.exit(0);
+    private static void finishProgram(Scanner scanner) {
+//        Would you like to create the report? (Y/N): y
+//        Would like to sort your students by descending gpa or name (1 for gpa, 2 for name): 1
+
+
+        String response;
+        while (true) {
+            System.out.println("Would you like to create the report? (Y/N): ");
+            response = scanner.next().toLowerCase();
+            if (response.equals("n")) {
+                System.out.println("Exiting program.");
+                System.exit(0);
+            } else if (response.equals("y")) {
+                System.out.println("Would like to sort your students by descending gpa or name (1 for gpa, 2 for name): ");
+                int choice = validateIntInput(scanner, 1, 2);
+
+                generateReport();
+                break;
+            }
+            System.out.printf("%s is invalid response", response);
+        }
+
+
     }
+
+    private static void generateReport() {
+        try {
+            FileWriter fileWriter = new FileWriter("report.txt");
+            PrintWriter printWriter = new PrintWriter(fileWriter);
+//         Print the header
+            printWriter.println("Report created on " + LocalDate.now());
+            printWriter.println("***********************");
+            printWriter.println();
+
+            // Print faculty information
+            printWriter.println("Faculty Members");
+            printWriter.println("-------------------------");
+            peopleList.stream()
+                    .filter(p -> p instanceof Faculty)
+                    .forEach(f -> f.printToFile(printWriter));
+            printWriter.println();
+
+//             Print staff information
+            printWriter.println("Staff Members");
+            printWriter.println("-------------------");
+            peopleList.stream()
+                    .filter(p -> p instanceof Staff)
+                    .forEach(f -> f.printToFile(printWriter));
+            printWriter.println();
+
+            //             Print student information
+            printWriter.println("Students (Sorted by GPA in descending order)");
+            printWriter.println("-----------");
+            peopleList.stream()
+                    .filter(p -> p instanceof Student)
+                    .map(p -> (Student) p)
+                    .sorted(Comparator.reverseOrder())
+//                    .sorted((p1, p2) -> p2.getFullName().compareTo(p1.getFullName()))
+                    .forEach(p -> p.printToFile(printWriter));
+            List<Person> students = peopleList.stream().filter(p -> p instanceof Student).toList();
+
+
+            printWriter.close();
+        } catch (IOException e) {
+            System.out.println("Error writing to the file: " + e.getMessage());
+        }
+//        try {
+//            FileWriter fileWriter = new FileWriter("report.txt");
+//            PrintWriter printWriter = new PrintWriter(fileWriter);
+//
+//            // Print the header
+//            printWriter.println("Report created on " + getCurrentDate());
+//            printWriter.println("***********************");
+//            printWriter.println();
+//
+//            // Print faculty information
+//            printWriter.println("Faculty Members");
+//            printWriter.println("-------------------------");
+//            peopleList.stream()
+//                    .filter(p-> p instanceof  Faculty)
+//                    .forEach(Person::print);
+//
+//            for (Person person : peopleList) {
+//                if (person instanceof Faculty) {
+//                    ((Faculty) person).print();
+//                }
+//            }
+//            printWriter.println();
+//
+//            // Print staff information
+//            printWriter.println("Staff Members");
+//            printWriter.println("-------------------");
+//            for (Person person : peopleList) {
+//                if (person instanceof Staff) {
+//                    ((Staff) person).print();
+//                }
+//            }
+//            printWriter.println();
+//
+//            // Sort students by GPA in descending order
+//            List<Student> students = new ArrayList<>();
+//            for (Person person : peopleList) {
+//                if (person instanceof Student) {
+//                    students.add((Student) person);
+//                }
+//            }
+//            Collections.sort(students, Collections.reverseOrder());
+//
+//            // Print students information
+//            printWriter.println("Students (Sorted by GPA in descending order)");
+//            printWriter.println("-----------");
+//            for (Student student : students) {
+//                student.print();
+//            }
+//
+//            printWriter.close();
+//            System.out.println("Report created and saved on your hard drive!");
+//
+//        } catch (IOException e) {
+//            System.out.println("Error writing to the file: " + e.getMessage());
+//        }
+    }
+
+//    private static String getCurrentDate() {
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+//        return dateFormat.format(new Date());
+//    }
+
+//}
 
     private static String getStatus(Scanner scanner) {
         String status;
@@ -305,12 +432,7 @@ abstract class Person {
 
     public abstract void print();
 
-    public void delete(String id) {
-    }
-
-    public void add(Person person) {
-
-    }
+    public abstract void printToFile(PrintWriter printWriter);
 }
 
 abstract class Employee extends Person {
@@ -339,11 +461,12 @@ abstract class Employee extends Person {
 }
 
 
-class Student extends Person {
+class Student extends Person implements Comparable<Student> {
 
     private final double PRICE = 236.45;
     private final int FEE = 52;
     private final double GPA_FOR_DISCOUNT = 3.85;
+    private static int number;
 
     private double gpa;
     private int numberOfCreditHours;
@@ -392,10 +515,26 @@ class Student extends Person {
         System.out.println("---------------------------------------------------------------------------");
 
     }
+
+    @Override
+    public void printToFile(PrintWriter printWriter) {
+        printWriter.printf("%s. %s \n", ++number, this.getFullName());
+        printWriter.println("ID:" + this.getId());
+        printWriter.printf("Gpa : %s \n", this.getGpa());
+        printWriter.printf("Credit hours : %s \n", this.getNumberOfCreditHours());
+        printWriter.println();
+    }
+
+    @Override
+    public int compareTo(Student o) {
+        return (int) (this.getGpa()-o.getGpa());
+
+    }
 }
 
 class Faculty extends Employee {
     private Rank rank;
+    private static int number;
 
     public Faculty(String id, String fullName, Department department, Rank rank) {
         super(id, fullName, department);
@@ -418,12 +557,19 @@ class Faculty extends Employee {
         System.out.println("---------------------------------------------------------------------------");
     }
 
+    @Override
+    public void printToFile(PrintWriter printWriter) {
+        printWriter.printf("%s. %s \n", ++number, this.getFullName());
+        printWriter.println("ID:" + this.getId());
+        printWriter.printf("%s, %s \n \n", this.getDepartment(), this.getRank());
+    }
+
 
 }
 
 class Staff extends Employee {
-    //status (part time or full time): String
     private String status;
+    private static int number;
 
     public Staff() {
         super();
@@ -450,7 +596,12 @@ class Staff extends Employee {
         System.out.println("---------------------------------------------------------------------------");
     }
 
-
+    @Override
+    public void printToFile(PrintWriter printWriter) {
+        printWriter.printf("%s. %s \n", ++number, this.getFullName());
+        printWriter.println("ID:" + this.getId());
+        printWriter.printf("%s, %s \n \n", this.getDepartment(), this.getStatus());
+    }
 }
 
 enum Department {
