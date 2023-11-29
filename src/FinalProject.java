@@ -1,3 +1,5 @@
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.NoSuchElementException;
@@ -14,16 +16,7 @@ public class FinalProject {
 
         System.out.println("Welcome to my Personal Management Program");
         while (true) {
-            System.out.println("Choose one of the options:");
-            System.out.println("1.  Enter the information of a faculty");
-            System.out.println("2.  Enter the information of a students");
-            System.out.println("3.  Print tuition invoice");
-            System.out.println("4.  Print faculty information");
-            System.out.println("5.  Enter the information of a staff member");
-            System.out.println("6.  Print the information of a staff member");
-            System.out.println("7.	Delete a person");
-            System.out.println("8.  Exit Program");
-//            int choice = scanner.nextInt();
+            displayMenu();
             int choice = validateIntInput(scanner, 1, 8);
             scanner.nextLine();
             switch (choice) {
@@ -58,75 +51,72 @@ public class FinalProject {
         }
     }
 
-    private static void printStaff() {
-        System.out.println("Enter the Staff’s id: ");
+    private static void displayMenu() {
+        System.out.println("Choose one of the options:");
+        System.out.println("1.  Enter the information of a faculty");
+        System.out.println("2.  Enter the information of a students");
+        System.out.println("3.  Print tuition invoice");
+        System.out.println("4.  Print faculty information");
+        System.out.println("5.  Enter the information of a staff member");
+        System.out.println("6.  Print the information of a staff member");
+        System.out.println("7.	Delete a person");
+        System.out.println("8.  Exit Program");
+    }
+
+    private static void addFacultyInformation(Scanner scanner) {
+        String full_name;
+        String facultyId;
+        String scanRank;
+        System.out.println("Enter the faculty info:");
+        System.out.print("Name of the faculty: ");
+        full_name = scanner.nextLine();
+        facultyId = getId(scanner);
+        Rank rank;
+        while (true) {
+            System.out.print("Enter rank: ");
+            scanRank = scanner.nextLine();
+            try {
+                rank = Rank.getByNameIgnoringCase(scanRank);
+                break;
+            } catch (IllegalArgumentException e) {
+                System.out.printf("%s is invalid rank", scanRank);
+            }
+        }
+        Department facultyDepartment = getDepartment(scanner);
+        Faculty faculty = new Faculty(facultyId, full_name, facultyDepartment, rank);
+        peopleList.add(faculty);
+        System.out.println("Faculty added!");
+    }
+
+    private static void addStudentInformation(Scanner scanner) {
+
+        double gpa;
+        System.out.println("Enter the student info:");
+        System.out.print("Name of Student: ");
+        String studentName = scanner.nextLine();
+        String studentId = getId(scanner);
+        gpa = getGpa(scanner);
+        System.out.println("Credit hours: ");
+        int creditHours = validateIntInput(scanner, 0, Integer.MAX_VALUE);
+        Student student = new Student(studentId, studentName, gpa, creditHours);
+        peopleList.add(student);
+        System.out.println("Student added!");
+    }
+
+    private static void printInvoice() {
+        System.out.println("Enter the student’s is:");
         Scanner scanner = new Scanner(System.in);
-        String id = scanner.nextLine();
+        String studentId = scanner.nextLine();
         try {
             Person person = peopleList.stream()
-                    .filter(p -> p.getId().equals(id))
-                    .filter(p -> p instanceof Staff)
+                    .filter(p -> p.getId().equals(studentId))
+                    .filter(p -> p instanceof Student)
                     .findFirst()
                     .orElseThrow();
             person.print();
         } catch (NoSuchElementException e) {
-            System.out.printf("No staff member matched with ID: %s /n", id);
+            System.out.printf("Student not found with ID: %s /n", studentId);
         }
-    }
-
-
-    private static void finishProgram() {
-        System.out.println("Exiting program.");
-        System.exit(0);
-    }
-
-    private static void deletePerson(Scanner scanner) {
-        System.out.print("Enter the ID of the person to delete: ");
-        String idToDelete = scanner.nextLine();
-        for (Person person : peopleList) {
-            if (person.getId().equals(idToDelete)) {
-                peopleList.remove(person);
-                System.out.println("Person deleted successfully.");
-              return;
-            }
-        }
-        System.out.println("Sorry no such person exists.");
-    }
-
-    private static void addStaffInformation(Scanner scanner) {
-//        Name of the staff member: Jamal Kareem
-//        Enter the id: ja6980
-//        Department: English
-//        Status, Enter P for Part Time, or Enter F for Full Time: f
-//
-//        Staff member added!
-        String status;
-        System.out.println("Name of the staff member: ");
-        String staffName = scanner.nextLine();
-        String id = getId(scanner);
-        Employee.Department department = getDepartment(scanner);
-        status = getStatus(scanner);
-        Staff staff = new Staff(id, staffName, department, status);
-        peopleList.add(staff);
-        System.out.println("Staff member added!");
-
-    }
-
-    private static String getStatus(Scanner scanner) {
-        String status;
-        while (true) {
-            System.out.println("Status, Enter P for Part Time, or Enter F for Full Time: ");
-            String staffStatus = scanner.next().toLowerCase();
-            if (staffStatus.equals("f")) {
-                status = "Full Time";
-                break;
-            } else if (staffStatus.equals("p")) {
-                status = "Part Time";
-                break;
-            }
-            System.out.printf("%s is invalid status", staffStatus);
-        }
-        return status;
     }
 
     private static void printFaculty() {
@@ -145,45 +135,68 @@ public class FinalProject {
         }
     }
 
-    private static void printInvoice() {
-        System.out.println("Enter the student’s is:");
+    private static void addStaffInformation(Scanner scanner) {
+        String status;
+        System.out.println("Name of the staff member: ");
+        String staffName = scanner.nextLine();
+        String id = getId(scanner);
+        Department department = getDepartment(scanner);
+        status = getStatus(scanner);
+        Staff staff = new Staff(id, staffName, department, status);
+        peopleList.add(staff);
+        System.out.println("Staff member added!");
+    }
+
+    private static void printStaff() {
+        System.out.println("Enter the Staff’s id: ");
         Scanner scanner = new Scanner(System.in);
-        String studentId = scanner.nextLine();
+        String id = scanner.nextLine();
         try {
             Person person = peopleList.stream()
-                    .filter(p -> p.getId().equals(studentId))
-                    .filter(p -> p instanceof Student)
-//                    .filter(p -> p.getClass().isInstance(Student.class))
+                    .filter(p -> p.getId().equals(id))
+                    .filter(p -> p instanceof Staff)
                     .findFirst()
                     .orElseThrow();
             person.print();
         } catch (NoSuchElementException e) {
-            System.out.printf("Student not found with ID: %s /n", studentId);
+            System.out.printf("No staff member matched with ID: %s /n", id);
         }
     }
 
-    private static void addStudentInformation(Scanner scanner) {
-//        	Enter the student info:
-//			Name of Student: Julia Alvarez
-//			ID: j1254
-//			Invalid ID format. Must be LetterLetterDigitDigitDigitDigit
-//
-//ID: ju1254
-//
-//Gpa: 3.26
-//			Credit hours: 7
-//   	Student added!
-        double gpa;
-        System.out.println("Enter the student info:");
-        System.out.print("Name of Student: ");
-        String studentName = scanner.nextLine();
-        String studentId = getId(scanner);
-        gpa = getGpa(scanner);
-        System.out.println("Credit hours: ");
-        int creditHours = validateIntInput(scanner, 0, Integer.MAX_VALUE);
-        Student student = new Student(studentId, studentName, gpa, creditHours);
-        peopleList.add(student);
-        System.out.println("Student added!");
+
+    private static void deletePerson(Scanner scanner) {
+        System.out.print("Enter the ID of the person to delete: ");
+        String idToDelete = scanner.nextLine();
+        for (Person person : peopleList) {
+            if (person.getId().equals(idToDelete)) {
+                peopleList.remove(person);
+                System.out.println("Person deleted successfully.");
+                return;
+            }
+        }
+        System.out.println("Sorry no such person exists.");
+    }
+
+    private static void finishProgram() {
+        System.out.println("Exiting program.");
+        System.exit(0);
+    }
+
+    private static String getStatus(Scanner scanner) {
+        String status;
+        while (true) {
+            System.out.println("Status, Enter P for Part Time, or Enter F for Full Time: ");
+            String staffStatus = scanner.next().toLowerCase();
+            if (staffStatus.equals("f")) {
+                status = "Full Time";
+                break;
+            } else if (staffStatus.equals("p")) {
+                status = "Part Time";
+                break;
+            }
+            System.out.printf("%s is invalid status", staffStatus);
+        }
+        return status;
     }
 
 
@@ -205,51 +218,12 @@ public class FinalProject {
         return gpa;
     }
 
-    private static void addFacultyInformation(Scanner scanner) {
-        String full_name;
-        String facultyId;
-        String scanRank;
-        //    Enter the faculty info:
-        //			Name of the faculty:  John Miller
-        //			ID: jo7894
-        //
-        //Rank: Instructor
-        //				“Instructor” is invalid
-        //			Rank: Assistant Professor
-        //				“Assistant Professor” is invalid
-        //
-        //			Rank: Professor
-        //
-        //Department: Engineering
-        //
-        //	Faculty added!
-        System.out.println("Enter the faculty info:");
-        System.out.print("Name of the faculty: ");
-        full_name = scanner.nextLine();
-        facultyId = getId(scanner);
-        Faculty.Rank rank;
-        while (true) {
-            System.out.print("Enter rank: ");
-            scanRank = scanner.nextLine();
-            try {
-                rank = Faculty.Rank.getByNameIgnoringCase(scanRank);
-                break;
-            } catch (IllegalArgumentException e) {
-                System.out.printf("%s is invalid rank", scanRank);
-            }
-        }
-        Employee.Department facultyDepartment = getDepartment(scanner);
-        Faculty faculty = new Faculty(facultyId, full_name, facultyDepartment, rank);
-        peopleList.add(faculty);
-        System.out.println("Faculty added!");
-    }
-
-    private static Employee.Department getDepartment(Scanner scanner) {
+    private static Department getDepartment(Scanner scanner) {
         while (true) {
             System.out.print("Enter department: ");
             String scannerDepartment = scanner.nextLine();
             try {
-                return Employee.Department.getByNameIgnoringCase(scannerDepartment);
+                return Department.getByNameIgnoringCase(scannerDepartment);
 
             } catch (IllegalArgumentException e) {
                 System.out.printf("%s is invalid department", scannerDepartment);
@@ -299,4 +273,224 @@ public class FinalProject {
         }
         return userInput;
     }
+}
+
+abstract class Person {
+    private String id;
+    private String fullName;
+
+    public Person() {
+    }
+
+    public Person(String id, String fullName) {
+        this.id = id;
+        this.fullName = fullName;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public abstract void print();
+
+    public void delete(String id) {
+    }
+
+    public void add(Person person) {
+
+    }
+}
+
+abstract class Employee extends Person {
+
+    // 	department (mathematics, engineering or english)
+    private Department department;
+
+    public Employee() {
+        super();
+    }
+
+    public Employee(String id, String fullName, Department department) {
+        super(id, fullName);
+        this.department = department;
+    }
+
+
+    public Department getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
+    }
+
+}
+
+
+class Student extends Person {
+
+    private final double PRICE = 236.45;
+    private final int FEE = 52;
+    private final double GPA_FOR_DISCOUNT = 3.85;
+
+    private double gpa;
+    private int numberOfCreditHours;
+
+    public Student() {
+        super();
+    }
+
+    public Student(String id, String fullName, double gpa, int numberOfCreditHours) {
+        super(id, fullName);
+        this.gpa = gpa;
+        this.numberOfCreditHours = numberOfCreditHours;
+    }
+
+    public double getGpa() {
+        return gpa;
+    }
+
+    public void setGpa(double gpa) {
+        this.gpa = gpa;
+    }
+
+    public int getNumberOfCreditHours() {
+        return numberOfCreditHours;
+    }
+
+    public void setNumberOfCreditHours(int numberOfCreditHours) {
+        this.numberOfCreditHours = numberOfCreditHours;
+    }
+
+    @Override
+    public void print() {
+        BigDecimal total;
+        int discount;
+        if (this.getGpa() >= GPA_FOR_DISCOUNT) {
+            discount = 25;
+        } else discount = 0;
+        total = BigDecimal.valueOf((this.getNumberOfCreditHours() * PRICE + FEE) * (100 - discount) / 100).setScale(2, RoundingMode.HALF_UP);
+
+        System.out.printf("Here is the tuition invoice for %s:\n\n", this.getFullName());
+        System.out.println("---------------------------------------------------------------------------");
+        System.out.printf("\t %s \t %s\n", this.getFullName(), this.getId());
+        System.out.printf("Credit Hours:%s ($%s/credit hour)\n", this.getNumberOfCreditHours(), PRICE);
+        System.out.printf("Fees: $%s \n \n", FEE);
+        System.out.printf("Total payment (after discount): $%s\t\t\t($%s discount applied)\n", total, discount);
+        System.out.println("---------------------------------------------------------------------------");
+
+    }
+}
+
+class Faculty extends Employee {
+    private Rank rank;
+
+    public Faculty(String id, String fullName, Department department, Rank rank) {
+        super(id, fullName, department);
+        this.rank = rank;
+    }
+
+    public Rank getRank() {
+        return rank;
+    }
+
+    public void setRank(Rank rank) {
+        this.rank = rank;
+    }
+
+    @Override
+    public void print() {
+        System.out.println("---------------------------------------------------------------------------");
+        System.out.printf("\t %s \t %s\n", this.getFullName(), this.getId());
+        System.out.printf("%s Department, %s\n", this.getDepartment(), this.getRank());
+        System.out.println("---------------------------------------------------------------------------");
+    }
+
+
+}
+
+class Staff extends Employee {
+    //status (part time or full time): String
+    private String status;
+
+    public Staff() {
+        super();
+    }
+
+    public Staff(String id, String fullName, Department department, String status) {
+        super(id, fullName, department);
+        this.status = status;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    @Override
+    public void print() {
+        System.out.println("---------------------------------------------------------------------------");
+        System.out.printf("\t %s \t %s\n", this.getFullName(), this.getId());
+        System.out.printf("%s Department, %s\n", this.getDepartment(), this.getStatus());
+        System.out.println("---------------------------------------------------------------------------");
+    }
+
+
+}
+
+enum Department {
+
+    Mathematics("mathematics"), Engineering("engineering"), English("English");
+
+
+    Department(String name) {
+        this.name = name;
+    }
+
+    String name;
+
+    public static Department getByNameIgnoringCase(String name) {
+        for (Department value : Department.values()) {
+            if (value.name.equalsIgnoreCase(name)) {
+                return value;
+            }
+        }
+        throw new IllegalArgumentException("Department not found " + name);
+    }
+
+}
+
+enum Rank {
+    Professor("professor"), Adjunct("adjunct");
+
+    Rank(String name) {
+        this.name = name;
+    }
+
+    String name;
+
+    public static Rank getByNameIgnoringCase(String name) {
+        for (Rank value : Rank.values()) {
+            if (value.name.equalsIgnoreCase(name)) {
+                return value;
+            }
+        }
+        throw new IllegalArgumentException("Rank not found " + name);
+    }
+
 }
