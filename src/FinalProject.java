@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class FinalProject {
     private static ArrayList<Person> peopleList = new ArrayList<>();
@@ -180,10 +179,6 @@ public class FinalProject {
     }
 
     private static void finishProgram(Scanner scanner) {
-//        Would you like to create the report? (Y/N): y
-//        Would like to sort your students by descending gpa or name (1 for gpa, 2 for name): 1
-
-
         String response;
         while (true) {
             System.out.println("Would you like to create the report? (Y/N): ");
@@ -238,68 +233,11 @@ public class FinalProject {
                     .sorted(Comparator.reverseOrder())
 //                    .sorted((p1, p2) -> p2.getFullName().compareTo(p1.getFullName()))
                     .forEach(p -> p.printToFile(printWriter));
-            List<Person> students = peopleList.stream().filter(p -> p instanceof Student).toList();
-
 
             printWriter.close();
         } catch (IOException e) {
             System.out.println("Error writing to the file: " + e.getMessage());
         }
-//        try {
-//            FileWriter fileWriter = new FileWriter("report.txt");
-//            PrintWriter printWriter = new PrintWriter(fileWriter);
-//
-//            // Print the header
-//            printWriter.println("Report created on " + getCurrentDate());
-//            printWriter.println("***********************");
-//            printWriter.println();
-//
-//            // Print faculty information
-//            printWriter.println("Faculty Members");
-//            printWriter.println("-------------------------");
-//            peopleList.stream()
-//                    .filter(p-> p instanceof  Faculty)
-//                    .forEach(Person::print);
-//
-//            for (Person person : peopleList) {
-//                if (person instanceof Faculty) {
-//                    ((Faculty) person).print();
-//                }
-//            }
-//            printWriter.println();
-//
-//            // Print staff information
-//            printWriter.println("Staff Members");
-//            printWriter.println("-------------------");
-//            for (Person person : peopleList) {
-//                if (person instanceof Staff) {
-//                    ((Staff) person).print();
-//                }
-//            }
-//            printWriter.println();
-//
-//            // Sort students by GPA in descending order
-//            List<Student> students = new ArrayList<>();
-//            for (Person person : peopleList) {
-//                if (person instanceof Student) {
-//                    students.add((Student) person);
-//                }
-//            }
-//            Collections.sort(students, Collections.reverseOrder());
-//
-//            // Print students information
-//            printWriter.println("Students (Sorted by GPA in descending order)");
-//            printWriter.println("-----------");
-//            for (Student student : students) {
-//                student.print();
-//            }
-//
-//            printWriter.close();
-//            System.out.println("Report created and saved on your hard drive!");
-//
-//        } catch (IOException e) {
-//            System.out.println("Error writing to the file: " + e.getMessage());
-//        }
     }
 
 //    private static String getCurrentDate() {
@@ -375,7 +313,7 @@ public class FinalProject {
 
     private static boolean isIdUnique(String id) {
 
-        if (peopleList.isEmpty() || peopleList == null) return false;
+        if (peopleList.isEmpty()) return false;
         return peopleList.stream().anyMatch(p -> p.getId().equals(id));
     }
 
@@ -527,7 +465,7 @@ class Student extends Person implements Comparable<Student> {
 
     @Override
     public int compareTo(Student o) {
-        return (int) (this.getGpa()-o.getGpa());
+        return (int) (this.getGpa() - o.getGpa());
 
     }
 }
@@ -613,7 +551,7 @@ enum Department {
         this.name = name;
     }
 
-    String name;
+    final String name;
 
     public static Department getByNameIgnoringCase(String name) {
         for (Department value : Department.values()) {
@@ -633,7 +571,7 @@ enum Rank {
         this.name = name;
     }
 
-    String name;
+    final String name;
 
     public static Rank getByNameIgnoringCase(String name) {
         for (Rank value : Rank.values()) {
