@@ -72,17 +72,7 @@ public class FinalProject {
         System.out.print("Name of the faculty: ");
         full_name = scanner.nextLine();
         facultyId = getId(scanner);
-        Rank rank;
-        while (true) {
-            System.out.print("Enter rank: ");
-            scanRank = scanner.nextLine();
-            try {
-                rank = Rank.getByNameIgnoringCase(scanRank);
-                break;
-            } catch (IllegalArgumentException e) {
-                System.out.printf("%s is invalid rank", scanRank);
-            }
-        }
+        Rank rank = getRank(scanner);
         Department facultyDepartment = getDepartment(scanner);
         Faculty faculty = new Faculty(facultyId, full_name, facultyDepartment, rank);
         peopleList.add(faculty);
@@ -136,18 +126,6 @@ public class FinalProject {
         }
     }
 
-    private static void addStaffInformation(Scanner scanner) {
-        String status;
-        System.out.println("Name of the staff member: ");
-        String staffName = scanner.nextLine();
-        String id = getId(scanner);
-        Department department = getDepartment(scanner);
-        status = getStatus(scanner);
-        Staff staff = new Staff(id, staffName, department, status);
-        peopleList.add(staff);
-        System.out.println("Staff member added!");
-    }
-
     private static void printStaff() {
         System.out.println("Enter the Staff’s id: ");
         Scanner scanner = new Scanner(System.in);
@@ -162,6 +140,18 @@ public class FinalProject {
         } catch (NoSuchElementException e) {
             System.out.printf("No staff member matched with ID: %s /n", id);
         }
+    }
+
+    private static void addStaffInformation(Scanner scanner) {
+        String status;
+        System.out.println("Name of the staff member: ");
+        String staffName = scanner.nextLine();
+        String id = getId(scanner);
+        Department department = getDepartment(scanner);
+        status = getStatus(scanner);
+        Staff staff = new Staff(id, staffName, department, status);
+        peopleList.add(staff);
+        System.out.println("Staff member added!");
     }
 
 
@@ -189,9 +179,10 @@ public class FinalProject {
             } else if (response.equals("y")) {
                 System.out.println("Would like to sort your students by descending gpa or name (1 for gpa, 2 for name): ");
                 int choice = validateIntInput(scanner, 1, 2);
-
-                generateReport();
-                break;
+                generateReport(choice);
+                System.out.println("Report created and saved on your hard drive!");
+                System.out.println("Goodbye!");
+                System.exit(0);
             }
             System.out.printf("%s is invalid response", response);
         }
@@ -199,54 +190,77 @@ public class FinalProject {
 
     }
 
-    private static void generateReport() {
+    private static void generateReport(int sortChoice) {
         try {
             FileWriter fileWriter = new FileWriter("report.txt");
             PrintWriter printWriter = new PrintWriter(fileWriter);
-//         Print the header
-            printWriter.println("Report created on " + LocalDate.now());
-            printWriter.println("***********************");
-            printWriter.println();
 
-            // Print faculty information
-            printWriter.println("Faculty Members");
-            printWriter.println("-------------------------");
-            peopleList.stream()
-                    .filter(p -> p instanceof Faculty)
-                    .forEach(f -> f.printToFile(printWriter));
-            printWriter.println();
-
-//             Print staff information
-            printWriter.println("Staff Members");
-            printWriter.println("-------------------");
-            peopleList.stream()
-                    .filter(p -> p instanceof Staff)
-                    .forEach(f -> f.printToFile(printWriter));
-            printWriter.println();
-
-            //             Print student information
-            printWriter.println("Students (Sorted by GPA in descending order)");
-            printWriter.println("-----------");
-            peopleList.stream()
-                    .filter(p -> p instanceof Student)
-                    .map(p -> (Student) p)
-                    .sorted(Comparator.reverseOrder())
-//                    .sorted((p1, p2) -> p2.getFullName().compareTo(p1.getFullName()))
-                    .forEach(p -> p.printToFile(printWriter));
+            printHeader(printWriter);
+            printFaculty(printWriter);
+            printStaff(printWriter);
+            if (sortChoice == 1)
+                printStudentSortByGpa(printWriter);
+            else printStudentSortByName(printWriter);
 
             printWriter.close();
+
         } catch (IOException e) {
             System.out.println("Error writing to the file: " + e.getMessage());
         }
     }
+
+    private static void printStudentSortByName(PrintWriter printWriter) {
+        printWriter.println("Students (Sorted by Full Name in descending order)");
+        printWriter.println("-----------");
+        peopleList.stream()
+                .filter(p -> p instanceof Student)
+                .map(p -> (Student) p)
+                .sorted((p1, p2) -> p2.getFullName().compareTo(p1.getFullName()))
+                .forEach(p -> p.printToFile(printWriter));
+    }
+
+
+    private static void printStudentSortByGpa(PrintWriter printWriter) {
+        printWriter.println("Students (Sorted by GPA in descending order)");
+        printWriter.println("-----------");
+        peopleList.stream()
+                .filter(p -> p instanceof Student)
+                .map(p -> (Student) p)
+                .sorted(Comparator.comparing(Student::getGpa).reversed())
+                .forEach(p -> p.printToFile(printWriter));
+    }
+
+    private static void printStaff(PrintWriter printWriter) {
+        printWriter.println("Staff Members");
+        printWriter.println("-------------------");
+        peopleList.stream()
+                .filter(p -> p instanceof Staff)
+                .forEach(f -> f.printToFile(printWriter));
+        printWriter.println();
+    }
+
+    private static void printFaculty(PrintWriter printWriter) {
+        printWriter.println("Faculty Members");
+        printWriter.println("-------------------------");
+        peopleList.stream()
+                .filter(p -> p instanceof Faculty)
+                .forEach(f -> f.printToFile(printWriter));
+        printWriter.println();
+    }
+
+    private static void printHeader(PrintWriter printWriter) {
+        printWriter.println("Report created on " + LocalDate.now());
+        printWriter.println("***********************");
+        printWriter.println();
+    }
+
 
 //    private static String getCurrentDate() {
 //        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 //        return dateFormat.format(new Date());
 //    }
 
-//}
-
+    //}
     private static String getStatus(Scanner scanner) {
         String status;
         while (true) {
@@ -271,7 +285,6 @@ public class FinalProject {
             System.out.print("Enter student Gpa: ");
             try {
                 gpa = scanner.nextDouble();
-                //todo read "."
                 if (gpa >= MIN_GPA && gpa <= MAX_GPA)
                     break;
                 else System.out.printf("invalid gpa. Enter double in rage form %s to %s /n", MIN_GPA, MAX_GPA);
@@ -289,7 +302,6 @@ public class FinalProject {
             String scannerDepartment = scanner.nextLine();
             try {
                 return Department.getByNameIgnoringCase(scannerDepartment);
-
             } catch (IllegalArgumentException e) {
                 System.out.printf("%s is invalid department", scannerDepartment);
             }
@@ -308,6 +320,22 @@ public class FinalProject {
             } else System.out.println("Invalid ID format. Must be LetterLetterDigitDigitDigitDigit");
         }
         return facultyId;
+    }
+
+    private static Rank getRank(Scanner scanner) {
+        String scanRank;
+        Rank rank;
+        while (true) {
+            System.out.print("Enter rank: ");
+            scanRank = scanner.nextLine();
+            try {
+                rank = Rank.getByNameIgnoringCase(scanRank);
+                break;
+            } catch (IllegalArgumentException e) {
+                System.out.printf("%s is invalid rank", scanRank);
+            }
+        }
+        return rank;
     }
 
 
@@ -374,8 +402,6 @@ abstract class Person {
 }
 
 abstract class Employee extends Person {
-
-    // 	department (mathematics, engineering or english)
     private Department department;
 
     public Employee() {
@@ -399,12 +425,12 @@ abstract class Employee extends Person {
 }
 
 
-class Student extends Person implements Comparable<Student> {
+class Student extends Person {
 
     private final double PRICE = 236.45;
     private final int FEE = 52;
     private final double GPA_FOR_DISCOUNT = 3.85;
-    private static int number;
+    private static int number = 0;
 
     private double gpa;
     private int numberOfCreditHours;
@@ -463,16 +489,12 @@ class Student extends Person implements Comparable<Student> {
         printWriter.println();
     }
 
-    @Override
-    public int compareTo(Student o) {
-        return (int) (this.getGpa() - o.getGpa());
 
-    }
 }
 
 class Faculty extends Employee {
     private Rank rank;
-    private static int number;
+    private static int number = 0;
 
     public Faculty(String id, String fullName, Department department, Rank rank) {
         super(id, fullName, department);
@@ -507,7 +529,7 @@ class Faculty extends Employee {
 
 class Staff extends Employee {
     private String status;
-    private static int number;
+    private static int number = 0;
 
     public Staff() {
         super();
