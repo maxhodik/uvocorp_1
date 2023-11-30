@@ -14,6 +14,8 @@ public class FinalProject {
     public static void main(String[] args) {
 
         Scanner scanner = new Scanner(System.in);
+        // it makes for test. You can comment this row
+        peopleList = RandomPersonGenerator.generateRandomPeopleList(100);
 
         System.out.println("Welcome to my Personal Management Program");
         while (true) {
