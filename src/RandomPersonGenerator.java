@@ -2,11 +2,6 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class RandomPersonGenerator {
-
-
-    private ArrayList<Person> randomPeopleList = generateRandomPeopleList(100);
-
-
     public static ArrayList<Person> generateRandomPeopleList(int size) {
         ArrayList<Person> peopleList = new ArrayList<>();
         Random random = new Random();
@@ -51,8 +46,9 @@ public class RandomPersonGenerator {
         String department = generateRandomDepartment(random);
         Department dep = Department.getByNameIgnoringCase(department);
         String status = generateRandomStatus(random);
+        Status stat= Status.getByNameIgnoringCase(status);
 
-        return new Staff(id, fullName, dep, status);
+        return new Staff(id, fullName, dep, stat);
     }
 
     private static String generateRandomFullName() {
@@ -80,7 +76,7 @@ public class RandomPersonGenerator {
     }
 
     private static String generateRandomStatus(Random random) {
-        String[] statuses = {"Full Time", "Part Time"};
+        String[] statuses = {"F", "P"};
         return statuses[random.nextInt(statuses.length)];
     }
 }
